@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+*.log
+*.db
+*.db-journal
+.env
+.env.local
+.DS_Store
+
+backend/src/generated/

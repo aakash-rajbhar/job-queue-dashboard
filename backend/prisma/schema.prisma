@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum JobType {
+  EMAIL
+  REPORT
+  SYNC
+  EXPORT
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Job {
+  id        String    @id @default(uuid())
+  title     String
+  type      JobType
+  status    JobStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+  version   Int       @default(0)
+
+  @@index([status, createdAt])
+  @@map("jobs")
+}
