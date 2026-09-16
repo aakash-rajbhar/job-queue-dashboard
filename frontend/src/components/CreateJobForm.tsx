@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { JobType } from '../types/job';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -9,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ArrowRight, Plus } from 'lucide-react';
 
 const JOB_TYPES: { value: JobType; label: string }[] = [
   { value: 'email', label: 'Email' },
@@ -40,40 +40,54 @@ export function CreateJobForm({ onSubmit, disabled }: Props) {
     }
   };
 
+  const isDisabled = disabled || submitting;
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
-      <Input
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Job title"
-        disabled={disabled || submitting}
-        className="flex-1"
-        required
-      />
-      <Select
-        value={type}
-        onValueChange={(v) => setType(v as JobType)}
-        disabled={disabled || submitting}
-      >
-        <SelectTrigger className="w-full sm:w-32">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {JOB_TYPES.map((jt) => (
-            <SelectItem key={jt.value} value={jt.value}>
-              {jt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button
-        type="submit"
-        disabled={disabled || submitting || !title.trim()}
-        className="w-full sm:w-auto"
-      >
-        {submitting ? 'Creating…' : 'Create job'}
-      </Button>
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-2 rounded-xl border bg-card p-2 transition-[border-color,box-shadow] focus-within:border-primary/60 focus-within:ring-4 focus-within:ring-primary/10 sm:flex-row sm:items-center"
+    >
+      <label className="flex min-w-0 flex-1 items-center gap-2.5 px-2">
+        <Plus
+          aria-hidden
+          className="size-4 shrink-0 text-muted-foreground"
+        />
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="What needs processing?"
+          disabled={isDisabled}
+          autoComplete="off"
+          className="h-10 w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        />
+      </label>
+      <div className="flex items-center gap-1.5 px-1.5 sm:px-1">
+        <Select
+          value={type}
+          onValueChange={(v) => setType(v as JobType)}
+          disabled={isDisabled}
+        >
+          <SelectTrigger className="h-9 w-full border-0 bg-transparent px-2 text-sm text-muted-foreground shadow-none hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 sm:w-auto">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {JOB_TYPES.map((jt) => (
+              <SelectItem key={jt.value} value={jt.value}>
+                {jt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          type="submit"
+          disabled={isDisabled || !title.trim()}
+          className="h-9 flex-1 gap-1.5 sm:flex-none"
+        >
+          {submitting ? 'Queuing…' : 'Queue job'}
+          {!submitting && <ArrowRight className="size-3.5" />}
+        </Button>
+      </div>
     </form>
   );
 }

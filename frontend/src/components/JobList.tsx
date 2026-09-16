@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import type { Job, JobStatus } from '../types/job';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -13,7 +11,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Check, Circle, CircleX, Loader2, Play, Trash2 } from 'lucide-react';
+import { Check, CircleX, Loader2, Play, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Props {
   jobs: Job[];
@@ -25,7 +24,7 @@ const NEXT_STATUS: Record<
   JobStatus,
   { label: string; value: JobStatus; icon: React.ReactNode }[]
 > = {
-  pending: [{ label: 'Start', value: 'running', icon: <Play /> }],
+  pending: [{ label: 'Run', value: 'running', icon: <Play /> }],
   running: [
     { label: 'Complete', value: 'completed', icon: <Check /> },
     { label: 'Fail', value: 'failed', icon: <CircleX /> },
@@ -34,31 +33,36 @@ const NEXT_STATUS: Record<
   failed: [],
 };
 
-const STATUS_CONFIG: Record<JobStatus, { badge: string; icon: React.ReactNode }> = {
+const STATUS_META: Record<JobStatus, { dot: string; text: string }> = {
   pending: {
-    badge: 'border-amber-300 bg-amber-50 text-amber-700',
-    icon: <Circle />,
+    dot: 'bg-amber-500 dark:bg-amber-400',
+    text: 'text-amber-600 dark:text-amber-400',
   },
   running: {
-    badge: 'border-blue-300 bg-blue-50 text-blue-700',
-    icon: <Circle className="animate-pulse" />,
+    dot: 'bg-sky-500 dark:bg-sky-400 animate-pulse',
+    text: 'text-sky-600 dark:text-sky-400',
   },
   completed: {
-    badge: 'border-emerald-300 bg-emerald-50 text-emerald-700',
-    icon: <Check />,
+    dot: 'bg-emerald-500 dark:bg-emerald-400',
+    text: 'text-emerald-600 dark:text-emerald-400',
   },
   failed: {
-    badge: 'border-red-300 bg-red-50 text-red-700',
-    icon: <CircleX />,
+    dot: 'bg-red-500 dark:bg-red-400',
+    text: 'text-red-600 dark:text-red-400',
   },
 };
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleString();
+  return new Date(dateStr).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 function Spinner() {
-  return <Loader2 className="animate-spin" />;
+  return <Loader2 className="size-3.5 animate-spin" />;
 }
 
 export function JobList({ jobs, onUpdateStatus, onDelete }: Props) {
@@ -87,87 +91,110 @@ export function JobList({ jobs, onUpdateStatus, onDelete }: Props) {
     }
   };
 
-  if (jobs.length === 0) {
-    return (
-      <div className="py-12 text-center text-muted-foreground">
-        No jobs found.
-      </div>
-    );
-  }
+  if (jobs.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      {jobs.map((job) => {
-        const actions = NEXT_STATUS[job.status];
-        const statusStyle = STATUS_CONFIG[job.status];
-        const rowBusy = busy?.id === job.id;
+    <>
+      <div className="overflow-hidden rounded-xl border bg-card">
+        {jobs.map((job) => {
+          const meta = STATUS_META[job.status];
+          const actions = NEXT_STATUS[job.status];
+          const rowBusy = busy?.id === job.id;
 
-        return (
-          <Card key={job.id} className="gap-0 py-4">
-            <CardContent className="flex items-start justify-between gap-4 px-6">
-              <div className="min-w-0 space-y-1 mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium truncate">{job.title}</span>
-                </div>
-                <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                  <span className="capitalize">{job.type}</span>
-                  <span aria-hidden className="opacity-50">
-                    ·
-                  </span>
-                  <time dateTime={job.createdAt}>{formatDate(job.createdAt)}</time>
+          return (
+            <div
+              key={job.id}
+              className={cn(
+                'flex flex-col gap-3 border-b border-border bg-card px-5 py-4 transition-colors',
+                'last:border-b-0 sm:flex-row sm:items-center sm:gap-4',
+                'hover:bg-secondary/50',
+              )}
+            >
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <span
+                  aria-hidden
+                  className={cn('mt-1.5 size-2 shrink-0 rounded-full', meta.dot)}
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-sm leading-snug font-medium text-foreground">
+                    {job.title}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
+                    <span className="font-medium tracking-wide uppercase">
+                      {job.type}
+                    </span>
+                    <span aria-hidden className="opacity-40">
+                      ·
+                    </span>
+                    <time className="tabular-nums" dateTime={job.createdAt}>
+                      {formatDate(job.createdAt)}
+                    </time>
+                    <span aria-hidden className="opacity-40">
+                      ·
+                    </span>
+                    <span className={cn('capitalize', meta.text)}>
+                      {job.status}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <Badge variant="outline" className={statusStyle.badge}>
-                {statusStyle.icon}
-                {job.status}
-              </Badge>
-            </CardContent>
-            <CardFooter className="gap-2 px-6 pt-0">
-              {actions.map((next) => (
+
+              <div className="flex shrink-0 items-center gap-1.5">
+                {actions.map((next) => (
+                  <Button
+                    key={next.value}
+                    size="sm"
+                    variant={next.value === 'failed' ? 'ghost' : 'default'}
+                    disabled={rowBusy}
+                    onClick={() => handleUpdate(job.id, next.value)}
+                    className={
+                      next.value === 'completed'
+                        ? 'bg-emerald-600 hover:bg-emerald-600/90 dark:bg-emerald-500 dark:hover:bg-emerald-500/90'
+                        : next.value === 'failed'
+                          ? 'text-destructive dark:text-red-400'
+                          : ''
+                    }
+                  >
+                    {busy?.id === job.id && busy.action === `update:${next.value}` ? (
+                      <Spinner />
+                    ) : (
+                      next.icon
+                    )}
+                    {next.label}
+                  </Button>
+                ))}
                 <Button
-                  key={next.value}
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   disabled={rowBusy}
-                  onClick={() => handleUpdate(job.id, next.value)}
+                  onClick={() => setDeleteTarget(job)}
+                  className="text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
+                  aria-label={`Delete ${job.title}`}
                 >
-                  {busy?.id === job.id && busy.action === `update:${next.value}` ? (
-                    <Spinner />
-                  ) : (
-                    next.icon
-                  )}
-                  {next.label}
+                  <Trash2 />
                 </Button>
-              ))}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-auto text-destructive hover:text-destructive"
-                disabled={rowBusy}
-                onClick={() => setDeleteTarget(job)}
-              >
-                <Trash2 />
-                Delete
-              </Button>
-            </CardFooter>
-          </Card>
-        );
-      })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       <AlertDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete job?</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently deletes “{deleteTarget?.title}”. This action cannot
-              be undone.
+              This permanently deletes “{deleteTarget?.title}”. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteTarget !== null && isBusy(deleteTarget.id)}>
+            <AlertDialogCancel
+              disabled={deleteTarget !== null && isBusy(deleteTarget.id)}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -188,6 +215,6 @@ export function JobList({ jobs, onUpdateStatus, onDelete }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
