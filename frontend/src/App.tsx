@@ -169,13 +169,7 @@ export function App() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
-              <span className="relative flex size-1.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
-              </span>
-              Live
-            </span>
+
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
           </div>
         </div>
@@ -252,12 +246,6 @@ export function App() {
           )}
         </div>
       </main>
-
-      <footer className="border-t border-border py-6">
-        <p className="px-4 text-center text-xs text-muted-foreground">
-          Job Queue · status machine with optimistic concurrency
-        </p>
-      </footer>
     </div>
   );
 }
